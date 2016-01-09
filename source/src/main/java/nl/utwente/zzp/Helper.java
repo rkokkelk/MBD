@@ -28,4 +28,14 @@ public class Helper {
     // Modifying this method can be used to normalize the counter
 		twitterMessage.put(KEY, curValue);
   }
+  
+  public static boolean hasPolarity(JSONObject twitterMessage){
+
+		int curValue = 0;
+		try{
+    	curValue = twitterMessage.getInt(KEY);
+		} catch (JSONException je){}
+
+    return curValue > 0 ? true : false;
+  }
 }

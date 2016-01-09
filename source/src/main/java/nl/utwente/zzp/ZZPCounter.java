@@ -35,7 +35,8 @@ import org.json.*;
 
 public class ZZPCounter {
 
-  private static String[] searchWords = {"@StZZPNederland","@ZPnetwerk"};
+  private static String[] searchMentions = {"StZZPNederland","ZPnetwerk"};
+  private static String[] searchWords = {"zzp","freelancer"};
 
   public static class CounterMapper 
        extends Mapper<Object, Text, Text, Text>{
@@ -54,18 +55,37 @@ public class ZZPCounter {
         return;
       }
 
-      idString.set(tweet.getString("id_str"));
       String tweetText = tweet.getString("text");
+      JSONObject user = tweet.getJSONObject("user");
+      JSONObject entities = tweet.getJSONObject("entities");
+      JSONArray mentions = entities.getJSONArray("user_mentions");
 
+      // Key is UserID
+      idString.set(user.getString("id_str"));
+
+      // Search for mentions
+      for (Object obj: mentions){
+        JSONObject mention = (JSONObject) obj;
+        for (String searchMention : searchMentions){
+          if (searchMention.equals(mention.getString("name"))){
+            Helper.increaseCounter(tweet);
+            break;
+          }
+        }
+      }
+
+      // Search for words
       for (String searchWord: searchWords){
         if (tweetText.indexOf(searchWord) != -1 ) {
 					Helper.increaseCounter(tweet);	
-					break;
 				}
 			}
 
-			json.set(tweet.toString());
-      context.write(idString, json);
+      // Only write tweet messages which have higher pollarity
+			if(Helper.hasPolarity(tweet)){
+        json.set(tweet.toString());
+        context.write(idString, json);
+      }
     }
   }
   
