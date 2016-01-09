@@ -21,6 +21,8 @@ package nl.utwente.bigdata;
 import java.io.IOException;
 import java.util.StringTokenizer;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -45,11 +47,11 @@ public class UniqueZZPCount {
     private JSONParser parser = new JSONParser();
     private JSONObject userObject = new JSONObject();
     private Map tweet;
-    private Text createdAt = new Text();
-    private Text createYear = new Text();
-    private Text createMonth = new Text();
-    private Text createDay = new Text();
-    private Text tweetText = new Text();
+    private String createdAt = new String();
+    private String createYear = new String();
+    private String createMonth = new String();
+    private String createDay = new String();
+    private String tweetText = new String();
 
     public void map(Object key, Text value, Context context
                     ) throws IOException, InterruptedException {
@@ -64,19 +66,19 @@ public class UniqueZZPCount {
           }
         
 
-        createdAt.set((String) tweet.get("created_at"));
-        createYear.set(createdAt.substring(createdAt.lastIndexOf(" ")+1));
-        createMonth.set(createdAt.split("\\s+")[1]);
-        createDay.set(createdAt.split("\\s+")[2]);
+        createdAt = (String) tweet.get("created_at");
+        createYear = createdAt.substring(createdAt.lastIndexOf(" ")+1);
+        createMonth = createdAt.split("\\s+")[1];
+        createDay = createdAt.split("\\s+")[2];
 
         userObject = (JSONObject) tweet.get("user");
-        UserIdString.set((String) user.get("id_str"));
+        UserIdString.set((String) userObject.get("id_str"));
 
-        tweetText.set((String) tweet.get('text'));
+        tweetText = (String) tweet.get("text");
 
         // Find words
         if (tweetText.toLowerCase().indexOf("zzp") != -1 ) {
-         dateString.set(createYear.concat(createMonth.concat(createDay))));
+         dateString.set(createYear.concat(createMonth.concat(createDay)));
          context.write(dateString, UserIdString);
         }
     }
@@ -84,14 +86,26 @@ public class UniqueZZPCount {
 
   public static class IntSumReducer
        extends Reducer<Text,Text,Text,IntWritable> {
-    private IntWritable result = new IntWritable();
+    private IntWritable result = new IntWritable(0);    
 
-    public void reduce(Text key, Text values,
+    public void reduce(Text key, Iterable<Text> values,
                        Context context
                        ) throws IOException, InterruptedException {
+      ArrayList<String> listOfUsers = new ArrayList<String>();
       int sum = 0;
-      for (IntWritable val : values) {
-        sum += val.get();
+      //String thisValue = new String();
+      //while (values.hasNext()) {
+      //  thisValue = values.next().toString();
+      //  if(!listOfUsers.contains(thisValue)){ //add the word if it isn't added already
+      //    listOfUsers.add(thisValue);
+      //    sum += 1; 
+      //  }
+      //}
+      for (Text val : values){
+        if(!listOfUsers.contains(val.toString())){
+          sum += 1;
+          listOfUsers.add(val.toString());
+        }
       }
       result.set(sum);
       context.write(key, result);
@@ -100,13 +114,16 @@ public class UniqueZZPCount {
 
   public static void main(String[] args) throws Exception {
     Configuration conf = new Configuration();
-    Job job = Job.getInstance(conf, "word count");
-    job.setJarByClass(WordCount.class);
+    Job job = Job.getInstance(conf, "unique zpp count");
+
+    job.setJarByClass(UniqueZZPCount.class);
     job.setMapperClass(CountMapper.class);
-    job.setCombinerClass(IntSumReducer.class);
     job.setReducerClass(IntSumReducer.class);
+
     job.setOutputKeyClass(Text.class);
     job.setOutputValueClass(IntWritable.class);
+    job.setMapOutputKeyClass(Text.class);
+    job.setMapOutputValueClass(Text.class);
     FileInputFormat.addInputPath(job, new Path(args[0]));
     FileOutputFormat.setOutputPath(job, new Path(args[1]));
     System.exit(job.waitForCompletion(true) ? 0 : 1);
