@@ -36,7 +36,8 @@ import org.json.*;
 public class ZZPCounter {
 
   private static String[] searchMentions = {"StZZPNederland","ZPnetwerk"};
-  private static String[] searchWords = {"zzp","freelancer"};
+  private static String[] searchWords = {"zzp","freelancer","var",};
+  private static String[] blackList = {"vacature"};
 
   public static class CounterMapper 
        extends Mapper<Object, Text, Text, Text>{
@@ -59,15 +60,30 @@ public class ZZPCounter {
       JSONObject user = tweet.getJSONObject("user");
       JSONObject entities = tweet.getJSONObject("entities");
       JSONArray mentions = entities.getJSONArray("user_mentions");
+      JSONArray hashtags = entities.getJSONArray("hashtags");
 
       // Key is UserID
       idString.set(user.getString("id_str"));
+
+      // Search hashtags
+      for (Object obj: hashtags){
+        JSONObject hashtag = (JSONObject) obj;
+        // Search for blacklist, if so then return
+        for (String black : blackList){
+          if (black.equals(hashtag.getString("text")))
+              return;
+        }
+        for (String searchWord : searchWords){
+          if (searchWord.equals(hashtag.getString("text")))
+            Helper.increaseCounter(tweet);
+        }
+      }
 
       // Search for mentions
       for (Object obj: mentions){
         JSONObject mention = (JSONObject) obj;
         for (String searchMention : searchMentions){
-          if (searchMention.equals(mention.getString("name"))){
+          if (searchMention.equals(mention.getString("screen_name"))){
             Helper.increaseCounter(tweet);
             break;
           }
