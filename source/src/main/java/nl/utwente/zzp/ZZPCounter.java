@@ -47,7 +47,12 @@ public class ZZPCounter {
     public void map(Object key, Text value, Context context
                     ) throws IOException, InterruptedException {
 
-      tweet = new JSONObject(value.toString());
+      try{
+        tweet = new JSONObject(value.toString());
+      }catch(JSONException je){
+        System.err.println("Error parsing: "+value.toString());
+        return;
+      }
 
       idString.set(tweet.getString("id_str"));
       String tweetText = tweet.getString("text");
