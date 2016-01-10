@@ -1,10 +1,14 @@
 package nl.utwente.zzp;
 
+import java.util.Date;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import org.json.*;
 
 public class Helper {
 
   public static final String KEY = "Polarity";
+  public static final SimpleDateFormat formatter = new SimpleDateFormat("EEE MMM d HH:mm:ss Z yyyy");
   
   public static void increaseCounter(JSONObject twitterMessage){
 		/*
@@ -38,4 +42,33 @@ public class Helper {
 
     return curValue > 0 ? true : false;
   }
+
+  public static boolean isZZP(int polarity){
+    
+    // Use this method to alter data which is ZZP or not
+    // based upon polarity
+    return true;
+
+  }
+
+  public static Date parseDate(String input){
+    try{
+      return formatter.parse(input);
+    } catch (ParseException pe){
+      System.err.println("Cannot parse input: "+input);
+    }
+    return null;
+  } 
+
+  public static Date getLatestDate(Date input1, Date input2){
+    if(input1 == null)
+      return input2;
+    else if(input2 == null)
+      return input1;
+    else
+      if(input1.after(input2))
+        return input1;
+      else
+        return input2;
+  } 
 }

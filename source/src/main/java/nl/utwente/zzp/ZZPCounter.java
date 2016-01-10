@@ -19,6 +19,7 @@ package nl.utwente.zzp;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Date;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -111,7 +112,42 @@ public class ZZPCounter {
     public void reduce(Text key, Iterable<Text> values, 
                        Context context
                        ) throws IOException, InterruptedException {
-      for (Text value : values) {
+
+      JSONObject tweet;
+      Text value = new Text();
+      Date start_date, end_date;
+      int sum_polarity = 0;
+      boolean set_create_date = false;
+
+      for (Text tmpValue : values) {
+
+        try{
+          tweet = new JSONObject(tmpValue.toString());
+        }catch(JSONException je){
+          System.err.println("Error parsing: "+tmpValue.toString());
+          return;
+        }
+
+        if(!set_create_date){
+          JSONObject user = tweet.getJSONObject("user");
+          String date_create = user.getString("created_at");
+          start_date = Helper.parseDate(date_create);
+          set_create_date = true;
+        }
+
+        // Ensure that the latest date matches the last tweet send
+        Date tmp = Helper.parseDate(tweet.getString("created_at"));
+        end_date = Helper.getLatestDate(end_date, tmp);
+
+        sum_polarity += tweet.getInt(Helper.KEY);
+      }
+
+      if(Helper.isZZP(sum_polarity)){
+        // Create CSV, Polarity,User_Created,Last_send_tweet
+        String result = ""+sum_polarity;
+        result += ","+start_date.getTime();
+        result += ","+end_date.getTime();
+        value.set(result);
         context.write(key, value);
       }
     }
