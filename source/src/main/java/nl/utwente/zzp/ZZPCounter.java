@@ -116,6 +116,7 @@ public class ZZPCounter {
       JSONObject tweet;
       Text value = new Text();
       Date start_date, end_date;
+      start_date = end_date = null;
       int sum_polarity = 0;
       boolean set_create_date = false;
 
