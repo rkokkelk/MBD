@@ -5,13 +5,13 @@ This project analyses Twitter data on a Hadoop cluster (owned by the University 
 To run the analysis code, follow these steps:
 1. Compile the source using the following [Maven](https://maven.apache.org/) command.
    ```sh
-    mvn clean package assembly:single
-    ```
+   mvn clean package assembly:single
+   ```
 2. Make sure your jar file (that includes the dependencies) is on the ctithead1.ewi.utwente.nl cluster.
 3. Use the following command on the cluster:
    ```sh
-    hadoop jar <jar> /data/twitterNL/ <outputdir>
-    ```
+   hadoop jar <jar> /data/twitterNL/ <outputdir>
+   ```
    `<jar>` is the jar file that includes the dependencies. 
    `<outputdir>` is the directory where the output data will be stored.
    If you want only a specific part of the data set as input, use `/data/twitterNL/YYYYmm/` where `YYYY` equals the year and `mm` equals the month (with leading zero).
