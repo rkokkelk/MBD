@@ -37,7 +37,7 @@ import org.json.*;
 public class ZZPCounter {
 
   private static String[] searchMentions = {"StZZPNederland","ZPnetwerk"};
-  private static String[] searchWords = {"zzp","freelancer","var",};
+  private static String[] searchWords = {"zzp","freelancer"," var ", " var-"}; // Add spaces otherwise FP are found
   private static String[] blackList = {"vacature"};
 
   public static class CounterMapper 
@@ -50,6 +50,12 @@ public class ZZPCounter {
     public void map(Object key, Text value, Context context
                     ) throws IOException, InterruptedException {
 
+      String tweetText = "";
+      JSONObject user = null;
+      JSONObject entities = null;
+      JSONArray mentions = null;
+      JSONArray hashtags = null;
+
       try{
         tweet = new JSONObject(value.toString());
       }catch(JSONException je){
@@ -57,14 +63,17 @@ public class ZZPCounter {
         return;
       }
 
-      String tweetText = tweet.getString("text");
-      JSONObject user = tweet.getJSONObject("user");
-      JSONObject entities = tweet.getJSONObject("entities");
-      JSONArray mentions = entities.getJSONArray("user_mentions");
-      JSONArray hashtags = entities.getJSONArray("hashtags");
-
-      // Key is UserID
-      idString.set(user.getString("id_str"));
+      try{
+        tweetText = tweet.getString("text");
+        user = tweet.getJSONObject("user");
+        entities = tweet.getJSONObject("entities");
+        mentions = entities.getJSONArray("user_mentions");
+        hashtags = entities.getJSONArray("hashtags");
+        idString.set(user.getString("id_str"));
+      }catch(JSONException je){
+        System.err.println("Error retrieving value: "+je.getMessage());
+        return;
+      }
 
       // Search hashtags
       for (Object obj: hashtags){
