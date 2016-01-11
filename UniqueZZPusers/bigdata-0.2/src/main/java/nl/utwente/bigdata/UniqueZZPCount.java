@@ -55,31 +55,32 @@ public class UniqueZZPCount {
 
     public void map(Object key, Text value, Context context
                     ) throws IOException, InterruptedException {
-        try {
-            tweet = (Map<String, Object>) parser.parse(value.toString());
+      try {
+          tweet = (Map<String, Object>) parser.parse(value.toString());
+
+          createdAt = (String) tweet.get("created_at");
+          if (createdAt != null){
+            createYear = createdAt.substring(createdAt.lastIndexOf(" ")+1);
+            createMonth = createdAt.split("\\s+")[1];
+            createDay = createdAt.split("\\s+")[2];
+
+            userObject = (JSONObject) tweet.get("user");
+            UserIdString.set((String) userObject.get("id_str"));
+
+            tweetText = (String) tweet.get("text");
+
+            // Find words
+            if (tweetText.toLowerCase().indexOf("zzp") != -1 ) {
+             dateString.set(createYear.concat(createMonth.concat(createDay)));
+             context.write(dateString, UserIdString);
+            }
           }
-          catch (ClassCastException e) {  
-            return; // do nothing (we might log this)
-          }
-          catch (org.json.simple.parser.ParseException e) {  
-            return; // do nothing 
-          }
-        
-
-        createdAt = (String) tweet.get("created_at");
-        createYear = createdAt.substring(createdAt.lastIndexOf(" ")+1);
-        createMonth = createdAt.split("\\s+")[1];
-        createDay = createdAt.split("\\s+")[2];
-
-        userObject = (JSONObject) tweet.get("user");
-        UserIdString.set((String) userObject.get("id_str"));
-
-        tweetText = (String) tweet.get("text");
-
-        // Find words
-        if (tweetText.toLowerCase().indexOf("zzp") != -1 ) {
-         dateString.set(createYear.concat(createMonth.concat(createDay)));
-         context.write(dateString, UserIdString);
+        }
+        catch (ClassCastException e) {  
+          return; // do nothing (we might log this)
+        }
+        catch (org.json.simple.parser.ParseException e) {  
+          return; // do nothing 
         }
     }
   }

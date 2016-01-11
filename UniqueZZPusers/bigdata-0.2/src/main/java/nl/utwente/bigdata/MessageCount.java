@@ -53,24 +53,25 @@ public class MessageCount {
 
     public void map(Object key, Text value, Context context
                     ) throws IOException, InterruptedException {
-        try {
-            tweet = (Map<String, Object>) parser.parse(value.toString());
-          }
-          catch (ClassCastException e) {  
-            return; // do nothing (we might log this)
-          }
-          catch (org.json.simple.parser.ParseException e) {  
-            return; // do nothing 
-          }
-        
+      try {
+          tweet = (Map<String, Object>) parser.parse(value.toString());
 
-        createdAt = (String) tweet.get("created_at");
-        createYear = createdAt.substring(createdAt.lastIndexOf(" ")+1);
-        createMonth = createdAt.split("\\s+")[1];
-        createDay = createdAt.split("\\s+")[2];
+          createdAt = (String) tweet.get("created_at");
+          if (createdAt != null){
+            createYear = createdAt.substring(createdAt.lastIndexOf(" ")+1);
+            createMonth = createdAt.split("\\s+")[1];
+            createDay = createdAt.split("\\s+")[2];
 
-        dateString.set(createYear.concat(createMonth.concat(createDay)));
-        context.write(dateString, one);
+            dateString.set(createYear.concat(createMonth.concat(createDay)));
+            context.write(dateString, one);
+          }
+        }
+        catch (ClassCastException e) {  
+          return; // do nothing (we might log this)
+        }
+        catch (org.json.simple.parser.ParseException e) {  
+          return; // do nothing 
+        }
     }
   }
 
