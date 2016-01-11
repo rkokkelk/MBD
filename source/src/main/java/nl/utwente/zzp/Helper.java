@@ -9,6 +9,7 @@ public class Helper {
 
   public static final String KEY = "Polarity";
   public static final SimpleDateFormat formatter = new SimpleDateFormat("EEE MMM d HH:mm:ss Z yyyy");
+  public static final SimpleDateFormat outputter = new SimpleDateFormat("dd/MM/yy");
   
   public static void increaseCounter(JSONObject twitterMessage){
 		/*
@@ -58,6 +59,10 @@ public class Helper {
       System.err.println("Cannot parse input: "+input);
     }
     return null;
+  } 
+
+  public static String formatDate(Date input){
+    return outputter.format(input);
   } 
 
   public static Date getLatestDate(Date input1, Date input2){

@@ -1,5 +1,8 @@
 nl/utwente/zzp/ZZPCounter$CounterMapper.class
 nl/utwente/zzp/ZZPCounter$CounterReducer.class
+nl/utwente/zzp/DateCounter$DateMapper.class
+nl/utwente/zzp/DateCounter$DateReducer.class
 nl/utwente/zzp/ZZPCounter.class
 nl/utwente/zzp/Helper.class
+nl/utwente/zzp/DateCounter.class
 nl/utwente/zzp/ZZP.class
