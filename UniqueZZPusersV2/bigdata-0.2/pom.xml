@@ -1,12 +1,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>nl.utwente.zzp</groupId>
-  <artifactId>zzpMonthly</artifactId>
+  <groupId>nl.utwente.bigdata</groupId>
+  <artifactId>bigdata</artifactId>
   <packaging>jar</packaging>
-  <version>0.3</version>
-  <name>ZZP Big Data</name>
+  <version>0.2</version>
+  <name>Big Data</name>
   <description></description>
-  <url>https://github.com/rkokkelk/MBD</url>
+  <url>http://utwente.nl</url>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -43,27 +43,5 @@
     <classifier>hadoop2</classifier>
     <scope>test</scope>
   </dependency>
-  <dependency>
-		<groupId>org.json</groupId>
-		<artifactId>json</artifactId>
-		<version>20151123</version>
-	</dependency>
   </dependencies>
-  <build>
-    <plugins>
-      <plugin>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <configuration>
-          <archive>
-            <manifest>
-              <mainClass>nl.utwente.zzp.ZZPMonthly</mainClass>
-            </manifest>
-          </archive>
-          <descriptorRefs>
-            <descriptorRef>jar-with-dependencies</descriptorRef>
-          </descriptorRefs>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
 </project>
