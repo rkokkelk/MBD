@@ -19,6 +19,7 @@ package nl.utwente.zzp;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.Date;
 
 import org.apache.hadoop.conf.Configuration;
@@ -51,6 +52,7 @@ public class ZZPCounter {
                     ) throws IOException, InterruptedException {
 
       String tweetText = "";
+      Date createdAt = null;
       JSONObject user = null;
       JSONObject entities = null;
       JSONArray mentions = null;
@@ -58,20 +60,14 @@ public class ZZPCounter {
 
       try{
         tweet = new JSONObject(value.toString());
-      }catch(JSONException je){
-        System.err.println("Error parsing: "+value.toString());
-        return;
-      }
-
-      try{
         tweetText = tweet.getString("text");
         user = tweet.getJSONObject("user");
         entities = tweet.getJSONObject("entities");
         mentions = entities.getJSONArray("user_mentions");
         hashtags = entities.getJSONArray("hashtags");
-        idString.set(user.getString("id_str"));
+        createdAt = Helper.parseDate(tweet.getString("created_at"));
       }catch(JSONException je){
-        System.err.println("Error retrieving value: "+je.getMessage());
+        System.err.println("Error parsing value: "+je.getMessage());
         return;
       }
 
@@ -109,6 +105,7 @@ public class ZZPCounter {
 
       // Only write tweet messages which have higher pollarity
 			if(Helper.hasPolarity(tweet)){
+			  idString.set(Helper.formatDate(createdAt));
         json.set(tweet.toString());
         context.write(idString, json);
       }
@@ -116,50 +113,45 @@ public class ZZPCounter {
   }
   
   public static class CounterReducer
-       extends Reducer<Text, Text, Text, Text> {
+       extends Reducer<Text, Text, Text, IntWritable> {
 
     public void reduce(Text key, Iterable<Text> values, 
                        Context context
                        ) throws IOException, InterruptedException {
 
+      HashMap<String,Integer> users = new HashMap();
+      String userId = "";
       JSONObject tweet;
-      Text value = new Text();
-      Date start_date, end_date;
-      start_date = end_date = null;
+      IntWritable value = new IntWritable();
       int sum_polarity = 0;
       boolean set_create_date = false;
 
       for (Text tmpValue : values) {
+        int polarity = 0;
 
         try{
           tweet = new JSONObject(tmpValue.toString());
+          JSONObject user = tweet.getJSONObject("user");
+          userId = user.getString("id_str");
+          polarity = tweet.getInt(Helper.KEY);
         }catch(JSONException je){
           System.err.println("Error parsing: "+tmpValue.toString());
           return;
         }
 
-        if(!set_create_date){
-          JSONObject user = tweet.getJSONObject("user");
-          String date_create = user.getString("created_at");
-          start_date = Helper.parseDate(date_create);
-          set_create_date = true;
+        if(users.containsKey(userId)){
+          users.put(userId,users.get(userId)+polarity);
+        }else{
+          users.put(userId,polarity);
         }
-
-        // Ensure that the latest date matches the last tweet send
-        Date tmp = Helper.parseDate(tweet.getString("created_at"));
-        end_date = Helper.getLatestDate(end_date, tmp);
-
-        sum_polarity += tweet.getInt(Helper.KEY);
       }
 
-      if(Helper.isZZP(sum_polarity)){
-        // Create CSV, Polarity,User_Created,Last_send_tweet
-        String result = ""+sum_polarity;
-        result += ","+start_date.getTime();
-        result += ","+end_date.getTime();
-        value.set(result);
-        context.write(key, value);
+      for(String tmpKey : users.keySet()){
+        if(Helper.isZZP(users.get(tmpKey)))
+            sum_polarity++;
       }
+      value.set(sum_polarity);
+      context.write(key, value);
     }
   }
 }
