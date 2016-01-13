@@ -18,22 +18,16 @@
 package nl.utwente.zzp;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.Date;
+import java.util.HashMap;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.util.GenericOptionsParser;
-
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class ZZPCounter {
 
@@ -41,55 +35,55 @@ public class ZZPCounter {
   private static String[] searchWords = {"zzp","freelancer"," var ", " var-"}; // Add spaces otherwise FP are found
   private static String[] blackList = {"vacature"};
 
-  public static class CounterMapper 
-       extends Mapper<Object, Text, Text, Text>{
+  public static class CounterMapper extends Mapper<Object, Text, Text, Text> {
     
     private Text idString  = new Text();
     private Text json = new Text();
     private JSONObject tweet;
       
-    public void map(Object key, Text value, Context context
-                    ) throws IOException, InterruptedException {
+    public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
 
       String tweetText = "";
       Date createdAt = null;
-      JSONObject user = null;
+      //JSONObject user = null;
       JSONObject entities = null;
       JSONArray mentions = null;
       JSONArray hashtags = null;
 
-      try{
+      try {
         tweet = new JSONObject(value.toString());
         tweetText = tweet.getString("text");
-        user = tweet.getJSONObject("user");
+        //user = tweet.getJSONObject("user");
         entities = tweet.getJSONObject("entities");
         mentions = entities.getJSONArray("user_mentions");
         hashtags = entities.getJSONArray("hashtags");
         createdAt = Helper.parseDate(tweet.getString("created_at"));
-      }catch(JSONException je){
+      } catch(JSONException je) {
         System.err.println("Error parsing value: "+je.getMessage());
         return;
       }
 
       // Search hashtags
-      for (Object obj: hashtags){
+      for (Object obj: hashtags) {
         JSONObject hashtag = (JSONObject) obj;
         // Search for blacklist, if so then return
-        for (String black : blackList){
-          if (black.equals(hashtag.getString("text")))
-              return;
+        for (String black : blackList) {
+          if (black.equals(hashtag.getString("text"))) {
+            return;
+          }
         }
-        for (String searchWord : searchWords){
-          if (searchWord.equals(hashtag.getString("text")))
+        for (String searchWord : searchWords) {
+          if (searchWord.equals(hashtag.getString("text"))) {
             Helper.increaseCounter(tweet);
+          }
         }
       }
 
       // Search for mentions
-      for (Object obj: mentions){
+      for (Object obj : mentions) {
         JSONObject mention = (JSONObject) obj;
         for (String searchMention : searchMentions){
-          if (searchMention.equals(mention.getString("screen_name"))){
+          if (searchMention.equals(mention.getString("screen_name"))) {
             Helper.increaseCounter(tweet);
             break;
           }
@@ -97,59 +91,56 @@ public class ZZPCounter {
       }
 
       // Search for words
-      for (String searchWord: searchWords){
+      for (String searchWord : searchWords) {
         if (tweetText.indexOf(searchWord) != -1 ) {
-					Helper.increaseCounter(tweet);	
-				}
-			}
+          Helper.increaseCounter(tweet);	
+        }
+      }
 
-      // Only write tweet messages which have higher pollarity
-			if(Helper.hasPolarity(tweet)){
-			  idString.set(Helper.formatDate(createdAt));
+      // Only write tweets which have higher polarity
+      if (Helper.hasPolarity(tweet)) {
+        idString.set(Helper.formatDate(createdAt));
         json.set(tweet.toString());
         context.write(idString, json);
       }
     }
   }
   
-  public static class CounterReducer
-       extends Reducer<Text, Text, Text, IntWritable> {
+  public static class CounterReducer extends Reducer<Text, Text, Text, IntWritable> {
 
-    public void reduce(Text key, Iterable<Text> values, 
-                       Context context
-                       ) throws IOException, InterruptedException {
+    public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
 
-      HashMap<String,Integer> users = new HashMap();
+      HashMap<String, Integer> users = new HashMap<String, Integer>();
       String userId = "";
       JSONObject tweet;
       IntWritable value = new IntWritable();
       int sum_polarity = 0;
-      boolean set_create_date = false;
 
       for (Text tmpValue : values) {
         int polarity = 0;
 
-        try{
+        try {
           tweet = new JSONObject(tmpValue.toString());
           JSONObject user = tweet.getJSONObject("user");
           userId = user.getString("id_str");
           polarity = tweet.getInt(Helper.KEY);
-        }catch(JSONException je){
-          System.err.println("Error parsing: "+tmpValue.toString());
+        } catch(JSONException je) {
+          System.err.println("Error parsing: " + tmpValue.toString());
           return;
         }
 
-        if(users.containsKey(userId)){
-          users.put(userId,users.get(userId)+polarity);
-        }else{
-          users.put(userId,polarity);
+        if (users.containsKey(userId)) {
+          polarity += users.get(userId);
         }
+        users.put(userId,polarity);
       }
 
-      for(String tmpKey : users.keySet()){
-        if(Helper.isZZP(users.get(tmpKey)))
-            sum_polarity++;
+      for(String tmpKey : users.keySet()) {
+        if(Helper.isZZP(users.get(tmpKey))) {
+          sum_polarity++;
+        }
       }
+      
       value.set(sum_polarity);
       context.write(key, value);
     }

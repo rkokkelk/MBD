@@ -19,7 +19,6 @@ package nl.utwente.zzp;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -44,8 +43,7 @@ public class ZZP {
     for (int i = 0; i < otherArgs.length - 1; ++i) {
       FileInputFormat.addInputPath(job, new Path(otherArgs[i]));
     }
-    FileOutputFormat.setOutputPath(job,
-      new Path(otherArgs[otherArgs.length - 1]));
+    FileOutputFormat.setOutputPath(job, new Path(otherArgs[otherArgs.length - 1]));
     System.exit(job.waitForCompletion(true) ? 0 : 1);
   }
 }
