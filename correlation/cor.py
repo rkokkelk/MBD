@@ -87,10 +87,7 @@ def main():
 
     for record in records:
         if record[1] == "#N/A":
-            try:
-                cbs = f(record[0].timestamp())
-            except:
-                cbs = f(record[0].timestamp()-200000)
+            cbs = f(record[0].timestamp())
             record[1] = cbs
         print("{0}\t{1}\t{2}".format(record[0],int(record[1]),int(float(record[2]))))
 
