@@ -54,20 +54,20 @@ def main():
     time_lst = list()
     count_lst = list()
 
-    with open('results2.csv', 'r') as csvfile:
+    with open('results.csv', 'r') as csvfile:
         results = csv.reader(csvfile, delimiter=',')
         for row in results:
             count_rows += 1
             if count_rows == 0:
                 continue
             try:
-                date = datetime.datetime.strptime(row[8],"%d/%m/%Y")
+                date = datetime.datetime.strptime(row[0],"%m/%d/%Y")
             except Exception as error:
                 print("Error",error)
                 continue
 
-            cbs = row[9]
-            zzp = row[10]
+            cbs = row[2]
+            zzp = row[3]
 
             if not cbs == "#N/A":
                 print(date.timestamp())
@@ -87,7 +87,10 @@ def main():
 
     for record in records:
         if record[1] == "#N/A":
-            cbs = f(record[0].timestamp())
+            try:
+                cbs = f(record[0].timestamp())
+            except:
+                cbs = f(record[0].timestamp()-200000)
             record[1] = cbs
         print("{0}\t{1}\t{2}".format(record[0],int(record[1]),int(float(record[2]))))
 
